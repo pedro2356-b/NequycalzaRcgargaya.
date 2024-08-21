@@ -1,0 +1,440 @@
+/* Using a self-executing anonymous function - (function(){})(); - so that all variables and functions defined within 
+aren’t available to the outside world. */
+
+(function(document){
+  
+/* Load Script function we may need to load jQuery from the Google's CDN */
+/* That code is world-reknown. */
+/* One source: http://snipplr.com/view/18756/loadscript/ */
+
+//get store name from variable
+
+//console.log(Shopify.shop);	//store name
+
+var loadScript1 = function(url, callback){
+ 
+  var script = document.createElement("script");
+  script.type = "text/javascript";
+  script.src = url;
+  document.getElementsByTagName("head")[0].appendChild(script);
+ 
+   //make sure done loading scripts
+     // If the browser is Internet Explorer.
+	  if (script.readyState){ 
+		script.onreadystatechange = function(){
+		  if (script.readyState == "loaded" || script.readyState == "complete"){
+			script.onreadystatechange = null;
+				//callback();
+				loadScript2('',callback);
+		  }
+		};
+	  // For any other browser.
+	  } else {
+		script.onload = function(){
+		sloaded = true;
+				//callback();
+				loadScript2('',callback);
+		};
+	  }
+	  
+};
+var loadScript2 = function(url, callback){
+	
+ 
+ //append slider script
+  var unslider = document.createElement("script");
+  unslider.type = "text/javascript";
+  unslider.src = 'https://app.testimonialhub.com/resources/public/js/wprs-combined.min.js?id=2';
+  document.getElementsByTagName("head")[0].appendChild(unslider);
+  
+
+
+  
+  //append css
+	var cssId = 'srs_css';  // you could encode the css path itself to generate id..
+	if (!document.getElementById(cssId))
+	{
+		var head  = document.getElementsByTagName('head')[0];
+		var link  = document.createElement('link');
+		link.id   = cssId;
+		link.rel  = 'stylesheet';
+		link.type = 'text/css';
+		link.href = 'https://app.testimonialhub.com/resources/public/css/srs_slider_master_min.css';
+		link.media = 'all';
+		head.appendChild(link);
+	}
+
+   //make sure done loading scripts
+	  if (unslider.readyState){
+		unslider.onreadystatechange = function(){
+		  if (unslider.readyState == "loaded" || unslider.readyState == "complete"){
+			unslider.onreadystatechange = null;
+				callback();
+		  }
+		};
+	  // For any other browser.
+	  } else {
+		unslider.onload = function(){
+				callback();
+		};
+	  }
+	  
+};
+
+var stringToBoolean = function(string){
+    switch(string.toLowerCase().trim()){
+        case "true": case "yes": case "1": return true;
+        case "false": case "no": case "0": case null: return false;
+        default: return Boolean(string);
+    }
+}
+
+/* This is my app's JavaScript */
+var myAppJavaScript = function($){
+  // $ in this scope references the jQuery object we'll use.
+  // Don't use jQuery, or jQuery191, use the dollar sign.
+  // Do this and do that, using $.
+  
+  //<div class="srs_slider" id="srs_template_1"></div>
+  // or [srs_template_1213]
+  
+  var foundsrscodeobj = $('*:contains("[srs_template_")').last();
+  if ($(foundsrscodeobj).length) {
+	  srs_addtemplate(foundsrscodeobj,'shortcode');
+  }
+  
+  //find div on page and append html
+  //alert('here');
+	if ($('.srs_slider').length) {
+		var foundsrsdivcodeobj = $('.srs_slider');
+		srs_addtemplate(foundsrsdivcodeobj,'div');
+	}
+	
+	function srs_addtemplate(foundsrsdivcodeobj,divorshort){
+		var shopurl= Shopify.shop;
+		//loop through each div and add html
+			
+	    $( foundsrsdivcodeobj ).each(function( i ) {
+			
+			//get templateid for div
+			var templateid = '';
+			var thisslider = $(this);
+			
+			if(divorshort == 'div' && $(this).attr( 'id' )){
+				var templateidstring = $(this).attr( 'id' );
+				var parts = templateidstring.split('_');
+				templateid = parts.pop();
+			}
+			//get template id from shortcode
+			if(divorshort=='shortcode'){
+				var temptext = $(this).text();
+				temptext = temptext.replace('[srs_template_','');
+				temptext = temptext.replace(']','');
+				templateid = parseInt(temptext);
+			//console.log('innertext:'+temptext);
+			}
+			console.log('templateid:'+templateid);
+			console.log('shopurl:'+shopurl);
+			var savedheight= {};
+			var wprevsliderini_height= {};
+			var wprevsliderini_height_widget= {};
+			var smallestwprev= {};
+			
+			//ajax for data
+			$.ajax({
+				 url:"https://app.testimonialhub.com/resources/public/ajax_get_slider.php",
+				 data: { storename: shopurl, tid: templateid },
+				 dataType: 'jsonp', // Notice! JSONP <-- P (lowercase)
+				 success:function(json){
+					 // do stuff with json (in this case an array)
+					thisslider.html('');
+					 console.log(json);
+					 var temphtml = json[0];
+					 thisslider.append(temphtml);
+					 //array($reviewhtml,"$storeurl","$templateid","$autoplay","$delay","$animation","$arrows","$animateHeight","$slidedots","$mousepause");
+					var autoplayval = stringToBoolean(json[3]);
+					var delayval = parseInt(json[4]);
+					var animationval = json[5];
+					var arrowsval = stringToBoolean(json[6]);
+					var animateHeightval = stringToBoolean(json[7]);
+					var mousepauseval = json[8];
+					var makingslideshow = json[9];	//set to 1 if making a slideshow
+					var snippetmake = json[10];
+					var snippettype = json[11];
+					var snippetname = json[12];
+					var snippetdesc = json[13];
+					var snippetnum = json[14];
+					var snippetavg = json[15];
+					var snippetimg = json[16];
+					var forceheight = json[17];
+					if(json[18]){
+					var clog = json[18];
+					console.log(clog);
+					}
+					var sliderid;
+					if(json[19]){
+						sliderid = json[19];
+					}
+					var sliderspeed = 750;;
+					if(json[20]){
+						sliderspeed = parseInt(json[20]);
+					}
+					
+					if(makingslideshow=="1"){
+						var slider = $('.wprev-slider').wprs_unslider(
+									{
+									autoplay: autoplayval,
+									delay: delayval,
+									speed: sliderspeed,
+									animation: animationval,
+									arrows: arrowsval,
+									animateHeight: animateHeightval,
+									activeClass: 'wprs_unslider-active',
+									}
+								);
+
+						if(mousepauseval=='yes'){
+							slider.on('mouseover', function() {
+									slider.data('wprs_unslider').stop();
+								}).on('mouseout', function() {
+									slider.data('wprs_unslider').start();
+									});
+						}
+						slider.on('wprs_unslider.change', function(event, index, slide) {
+									$('.wprev-slider').find('.wprs_rd_less:visible').trigger('click');
+								});
+						//fix for animation:fade with animateHeight set to false
+						if(animationval=='fade' && animateHeightval==false){
+							thisslider.find( ".wprs_unslider-active" ).show();
+							var heights = thisslider.find( "li" ).map(function ()
+							{
+								return $(this).height();
+							}).get(),
+
+							maxHeight = Math.max.apply(null, heights);
+							var divliactiveheight = $( ".wprs_unslider-active" ).height();
+							$(".wprs_unslider-active"  ).closest( ".wprev-slider" ).css( "height", maxHeight );
+						}
+						//add classes to nav and arrows
+						var slidername = "#wprev-slider-"+sliderid;
+						$(slidername).siblings('.wprs_unslider-nav').attr( 'id','wprs_nav_'+sliderid);
+						$(slidername).siblings('.wprs_unslider-arrow').attr( 'id','wprs_nav_arrow_'+sliderid);
+						
+					}
+					
+					//if force all same height set to yes then rezise here.
+						if(forceheight=='yes'){
+							//find max height and set all equal to it
+							var maxheights = thisslider.find(".w3_wprs-col").find("p").map(function ()
+								{
+									return $(this).outerHeight();
+								}).get(),
+								maxHeightofslide = Math.max.apply(null, maxheights);
+								thisslider.find(".w3_wprs-col").find("p").css( "height", maxHeightofslide );
+						}
+					
+					//turn on google snippet if set to yes
+					if(snippetmake=="yes" && Number(snippetavg)>0){
+						var tempsnippethtml = '<script type="application/ld+json">{"@context": "http://schema.org/","@type": "'+snippettype+'","name": "'+snippetname+'","description": "'+snippetdesc+'","aggregateRating": {"@type": "AggregateRating","ratingValue": "'+snippetavg+'","ratingCount": "'+snippetnum+'"},"image": "'+snippetimg+'"}</script>';
+						thisslider.append( tempsnippethtml );
+					}
+					
+					//adding read more script
+					$( ".wprs_rd_more" ).unbind().on( "click", function(event) {
+								event.preventDefault();
+								//var oldheight = $(this).parent().parent().height();	//height of individual review indrevdiv
+								var oldheight = $(this).closest('.indrevdiv').height();
+								//var oldouterheight = $(this).parent().parent().outerHeight();
+								var oldouterheight = $(this).closest('.indrevdiv').outerHeight();
+
+								//save these heights in an object so we can access them from read less click.
+								var sliderid = $(this).closest('.wprev-slider').attr('id');
+								var slideid = sliderid+'-'+$(this).closest('.w3_wprs-col').index();
+								var li_id = sliderid+'-'+$(this).closest('li').index();
+								
+								//savedheight[slideid] = $(this ).parent().parent().css("height");
+								savedheight[slideid] =$(this).closest('.indrevdiv').css("height");
+								wprevsliderini_height[slideid] = $(this ).closest('.wprev-slider').css("height");
+								wprevsliderini_height_widget[slideid] = $(this ).closest('.wprev-slider-widget').css("height");
+								
+								if(Number(wprevsliderini_height[slideid])<Number(smallestwprev[li_id]) || !smallestwprev[li_id] || typeof smallestwprev[li_id] === 'undefined'){
+									//save the smallest value in this object, use if needed
+									smallestwprev[li_id]=wprevsliderini_height[slideid];
+								}
+								if(Number(wprevsliderini_height_widget[slideid])<Number(smallestwprev[li_id]) || !smallestwprev[li_id] || typeof smallestwprev[li_id] === 'undefined'){
+									//save the smallest value in this object, use if needed
+									smallestwprev[li_id]=wprevsliderini_height_widget[slideid];
+								}
+								
+						//console.log('wprevsliderini_height'+wprevsliderini_height);
+						//console.log(wprevsliderini_height);
+						//console.log('smallestwprev'+smallestwprev);
+						//console.log(smallestwprev);
+
+								$(this).closest('.indrevdiv').css( 'height', 'auto' );
+								$(this).closest('.indrevdiv').parent().css( 'height', 'auto' );
+								$(this ).parent().css( "height", 'auto' );
+								$(this ).hide();
+								$( this ).prevAll('span.wprs_rd_more_1').hide();
+								$( this ).next('span').show(0, function() {
+									// Animation complete.
+									$( this ).css('display', 'inline');
+									$( this ).next('.wprs_rd_less').show();
+									//setmoreheight(this);
+									var morelink = $(this);
+									setTimeout ( function () {
+										setmoreheight(morelink);
+									}, 20);
+								});
+
+								var newheight =$(this).closest('.indrevdiv').height();
+						
+								//fix if we made smaller then set back to what it was.
+								if(newheight<oldheight){
+									if(oldouterheight>oldheight){
+										$(this).closest('.indrevdiv').css( 'height', oldouterheight );
+									}else {
+										$(this).closest('.indrevdiv').css( 'height', oldheight );
+									}
+								}
+								
+							});
+							
+			
+					function setmoreheight(morelink){
+						//find height of .wprs_unslider-active then set .wprev-slider, only change if bigger
+						var liheight = $(morelink).closest( '.wprs_unslider-active' ).outerHeight(true);
+						//find max height of all slides
+						var heights = $(morelink).closest('.wprs_unslider').find( "li" ).map(function ()
+									{
+										return $(this).outerHeight();
+									}).get(),
+						overallheight = Math.max.apply(null, heights);
+						
+						//console.log('li:'+liheight);
+						//console.log('o:'+overallheight);
+						
+						if(liheight>overallheight || liheight==overallheight){
+							$(morelink ).closest( '.wprev-slider' ).animate({height: liheight,}, 300 );
+							$(morelink ).closest( '.wprev-slider-widget' ).animate({height: liheight,}, 300 );
+						} else if(overallheight>100) {
+							$(morelink ).closest( '.wprev-slider' ).animate({height: overallheight,}, 300 );
+							$(morelink ).closest( '.wprev-slider-widget' ).animate({height: overallheight,}, 300 );
+						}
+					}
+							
+					//read less click
+					//$( ".srs_slider" ).unbind().on( "click", ".wprs_rd_less", function(event) {
+					$( ".wprs_rd_less" ).unbind().on( "click", function(event) {
+						event.preventDefault();
+						//get the slide ID of this read less so we know which height to pull
+						var sliderid = $(this).closest('.wprev-slider').attr('id');
+						var slideid = sliderid+'-'+$(this).closest('.w3_wprs-col').index();
+						var li_id = sliderid+'-'+$(this).closest('li').index();
+						$(this ).hide();
+						$( this ).prev('span').hide( 0, function() {
+							$(this ).prevAll('.wprs_rd_more').show();
+							$( this ).prevAll('span.wprs_rd_more_1').show();
+						});
+
+							//check if there are no readless then use smallest value
+							var checkreadless = $(this ).closest('.wprevprodiv').find('.wprs_rd_less:visible').length;
+							//if checkreadless = 0 then we need to make smallest
+							var tempsliderheight = wprevsliderini_height[slideid];
+							var tempsliderheightwidget = wprevsliderini_height_widget[slideid];
+							if(checkreadless==0){
+								//tempsliderheight = smallestwprev[li_id];
+								//tempsliderheightwidget = smallestwprev[li_id];
+							}
+							
+						//	console.log('wprevsliderini_height'+wprevsliderini_height);
+						//console.log(wprevsliderini_height);
+						//console.log('tempsliderheight'+tempsliderheight);
+						//console.log(tempsliderheight);
+						
+							$(this ).closest('.indrevdiv').animate({
+								height: savedheight[slideid],
+							  }, 0 );
+							$(this ).closest('.wprev-slider').animate({
+								height: tempsliderheight,
+							 }, 200 );
+							$(this ).closest('.wprev-slider-widget').animate({
+								height: tempsliderheightwidget,
+							  }, 200 );
+
+					});
+					
+
+				 },
+				 error:function(jqXHR, textStatus){
+					 console.log("Error pulling reviews from Social Review Slider database.");
+					 console.log( "Request failed: " + textStatus );
+					 console.log(jqXHR);
+				 },
+				 complete:function(json){
+					console.log(json);
+					console.log("Done pulling reviews from Social Review Slider database.");
+				 }     
+			});
+
+
+		});
+	
+		
+		
+	}
+
+};
+
+/* If jQuery has not yet been loaded or if it has but it's too old for our needs,
+we will load jQuery from the Google CDN, and when it's fully loaded, we will run
+our app's JavaScript. Set your own limits here, the sample's code below uses 3.0
+as the minimum version we are ready to use, and if the jQuery is older, we load 3.2. */
+//if ((typeof jQuery === 'undefined') || (parseFloat(jQuery.fn.jquery) < 3.0)) {
+	
+buildslider();
+
+function buildslider(){
+	if ((typeof jQuery === 'undefined')) {
+		console.log('jquery undefined');
+	   // loadScript1('https://code.jquery.com/jquery-1.12.4.min.js', function(){
+		//	jQuery = jQuery.noConflict(true);
+		//	myAppJavaScript(jQuery);
+	   // });
+			loadScript1('https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js', function(){
+				jQuery = jQuery.noConflict(true);
+				myAppJavaScript(jQuery);
+			});
+	} else {
+		console.log('jquery defined, version:'+jQuery.fn.jquery);
+		//console.log('jquery defined');
+		//console.log(jQuery.fn);
+		//check if this jquery has ajax
+		if(typeof jQuery.ajax === "function" && jQuery.fn.jquery != "3.6.0"){
+			console.log('does have ajax');
+			loadScript2('', function(){
+				myAppJavaScript(jQuery);
+		    });
+		} else {
+			console.log('jquery defined, but no ajax or 3.6.0..adding 3.7.1');
+			loadScript1('https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js', function(){
+				jQuery = jQuery.noConflict(true);
+				myAppJavaScript(jQuery);
+			});
+			
+			//loadScript1('https://code.jquery.com/jquery-1.12.4.min.js', function(){
+			//	jQuery = jQuery.noConflict(true);
+			//	myAppJavaScript(jQuery);
+			//});
+		}
+	}
+}
+
+if ((typeof jQuery !== 'undefined')) {
+jQuery(document)
+ .on('shopify:block:select', buildslider )
+ .on('shopify:section:unload', buildslider )
+;
+}
+
+})(document);
